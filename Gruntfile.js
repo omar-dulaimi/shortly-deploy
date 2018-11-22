@@ -62,7 +62,7 @@ module.exports = function (grunt) {
       },
       target: {
         files: {
-          'public/dist/styles.css': ['public/dist/styles.css']
+          'public/dist/styles.css': 'public/style.css'
         }
       }
     },
