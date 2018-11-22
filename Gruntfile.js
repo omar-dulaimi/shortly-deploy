@@ -3,16 +3,13 @@ module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     concat: {
+
       options: {
-        separator: ';',
+        separator: ';'
       },
-      js: {
-        src: ['public/client/*.js', 'public/lib/*.js'],
-        dest: 'public/dist/scripts.js'
-      },
-      css: {
-        src: ['public/*.css'],
-        dest: 'public/dist/styles.css'
+      dist: {
+        src: ['public/client/**/*.js'],
+        dest: 'public/dist/<%= pkg.name %>.js'
       }
     },
 
@@ -32,37 +29,37 @@ module.exports = function (grunt) {
     },
 
     uglify: {
-      my_target: {
-        files: [{
-          'public/dist/scripts.js': 'public/dist/scripts.js'
-        }]
+
+      options: {
+        banner: '/*! <%= pkg.name %> <%= grunt.template.today("dd-mm-yyyy") %> */\n'
+      },
+      dist: {
+        files: {
+          'public/dist/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+        }
       }
     },
 
     eslint: {
-      options: {
-        configFile: '.eslintrc.js',
-      },
       target: [
-        'app/collections/*.js',
-        'app/models/*.js',
-        'app/config.js',
-        'lib/requst-handler.js',
-        'utility.js',
-        'public/client/*.js',
-        'server.js',
-        'server-config.js'
+
+        'Gruntfile.js',
+        'app/**/*.js',
+        'public/**/*.js',
+        'lib/**/*.js',
+        './*.js',
+        'spec/**/*.js'
       ]
     },
 
     cssmin: {
+
       options: {
-        mergeIntoShorthands: false,
-        roundingPrecision: -1
+        keepSpecialComments: 0
       },
-      target: {
+      dist: {
         files: {
-          'public/dist/styles.css': 'public/style.css'
+          'public/dist/style.min.css': 'public/style.css'
         }
       }
     },
@@ -70,19 +67,12 @@ module.exports = function (grunt) {
     watch: {
       scripts: {
         files: [
-          'app/collections/*.js',
-          'app/models/*.js',
-          'app/config.js',
-          'lib/*.js',
-          'public/client/*.js',
-          'server.js',
-          'server-config.js',
-          'public/lib/*.js'
+          'public/client/**/*.js',
+          'public/lib/**/*.js',
         ],
         tasks: [
           'concat',
-          'uglify',
-          'eslint'
+          'uglify'
         ]
       },
       css: {
@@ -93,7 +83,13 @@ module.exports = function (grunt) {
 
     shell: {
       prodServer: {
-        
+
+        command: 'git push live master',
+        options: {
+          stdout: true,
+          stderr: true,
+          failOnError: true
+        }
       }
     },
   });
@@ -116,40 +112,32 @@ module.exports = function (grunt) {
   ////////////////////////////////////////////////////
 
   grunt.registerTask('test', [
+    'eslint',
     'mochaTest'
   ]);
 
-  grunt.registerTask('eslintIt', [
-    'eslint'
-  ]);
 
   grunt.registerTask('nodemonIt', [
     'nodemon'
   ]);
 
 
-  grunt.registerTask('concat-js', ['concat:js']);
-
-  grunt.registerTask('concat-css', ['concat:css']);
-
-
-  grunt.registerTask('uglifyIt', ['uglify']);
-
-  grunt.registerTask('cssminIt', ['cssmin']);
-
-  grunt.registerTask('build', ['concat-js', 'concat-css', 'uglifyIt', 'cssminIt', 'eslintIt', 'test']);
-
+  grunt.registerTask('build', [
+    'concat',
+    'uglify',
+    'cssmin'
+  ]);
   grunt.registerTask('upload', function (n) {
     if (grunt.option('prod')) {
-      // add your production server task here
+      grunt.task.run(['shell:prodServer']);
     } else {
       grunt.task.run(['server-dev']);
     }
   });
 
   grunt.registerTask('deploy', [
-    // add your deploy tasks here
+    'test',
+    'build',
+    'upload'
   ]);
-
-
 };
